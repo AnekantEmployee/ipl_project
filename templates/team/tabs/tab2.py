@@ -1,96 +1,247 @@
 import streamlit as st
-import matplotlib.pyplot as plt
+import plotly.express as px
+import pandas as pd
+import plotly.graph_objects as go
+
+
+def apply_custom_css():
+    """Apply custom CSS styles to the Streamlit app"""
+    st.markdown(
+        """
+        <style>
+            .header {
+                color: #ff4b4b;
+                font-size: 40px;
+                font-weight: bold;
+                text-align: center;
+                margin-bottom: 20px;
+            }
+            .subheader {
+                color: #1c83e1;
+                font-size: 24px;
+                font-weight: bold;
+                margin-top: 20px;
+                margin-bottom: 10px;
+            }
+            .metric-card {
+                background-color: #f0f2f6;
+                border-radius: 10px;
+                padding: 15px;
+                text-align: center;
+            }
+            .metric-value {
+                font-size: 36px;
+                font-weight: bold;
+                color: #1c83e1;
+            }
+            .metric-name {
+                font-size: 16px;
+                color: #555;
+            }
+        </style>
+        """,
+        unsafe_allow_html=True,
+    )
+
+
+def create_metric_card(value, name, highlight=None):
+    """Create a metric card with optional highlight"""
+    if highlight:
+        name = f"{name} - {highlight}"
+    return f"""
+    <div class="metric-card">
+        <div class="metric-value">{value}</div>
+        <div class="metric-name">{name}</div>
+    </div>
+    """
 
 
 def toss_analysis(response, team):
-    st.write(f"Insights of {response['total_matches'].shape[0]} tosses held by {team}")
+    """Main function to display toss analysis dashboard"""
+    try:
+        apply_custom_css()
 
-    # First pie chart: Toss statistics
-    st.subheader("Toss Statistics")
-    fig1, ax1 = plt.subplots(figsize=(10, 6))
+        st.subheader(f"Toss Statistics of {team}")
 
-    toss_labels = ["Toss Won", "Toss Lost"]
-    toss_sizes = [
-        response["toss_analysis"]["toss_won"].shape[0],
-        response["total_matches"].shape[0]
-        - response["toss_analysis"]["toss_won"].shape[0],
-    ]
-    explode = (0.1, 0)  # explode the 1st slice
+        # Calculate metrics
+        total_matches = response["total_matches"].shape[0]
+        toss_won = response["toss_analysis"]["toss_won"].shape[0]
+        toss_lost = total_matches - toss_won
+        toss_win_percentage = (toss_won / total_matches) * 100
+        match_won_after_toss_win = response["toss_analysis"][
+            "toss_won_match_won"
+        ].shape[0]
+        match_lost_after_toss_win = toss_won - match_won_after_toss_win
+        match_won_after_toss_loss = response["toss_analysis"][
+            "toss_loss_match_won"
+        ].shape[0]
+        match_lost_after_toss_loss = toss_lost - match_won_after_toss_loss
 
-    ax1.pie(
-        toss_sizes,
-        explode=explode,
-        labels=toss_labels,
-        autopct="%1.1f%%",
-        shadow=True,
-        startangle=90,
-        colors=["#4CAF50", "#ff6347"],
-    )
-    ax1.set_title(
-        f"Toss Win/Loss Distribution ({response['total_matches'].shape[0]} matches)"
-    )
+        # Create tabs
+        tab1, tab2 = st.tabs(["Overview", "Detailed Analysis"])
 
-    # Display the first pie chart
-    st.pyplot(fig1)
+        with tab1:
+            # Overview metrics
+            col1, col2, col3 = st.columns(3)
 
-    # Second pie chart: Match outcomes after winning toss
-    st.subheader("Match Outcome When Toss Was Won")
-    fig2, ax2 = plt.subplots(figsize=(10, 6))
+            with col1:
+                st.markdown(
+                    create_metric_card(
+                        f"{toss_win_percentage:.1f}%", "Toss Win Percentage"
+                    ),
+                    unsafe_allow_html=True,
+                )
 
-    outcome_labels = ["Match Won after Winning Toss", "Match Lost after Winning Toss"]
-    outcome_sizes = [
-        response["toss_analysis"]["toss_won_match_won"].shape[0],
-        response["toss_analysis"]["toss_won"].shape[0]
-        - response["toss_analysis"]["toss_won_match_won"].shape[0],
-    ]
-    explode = (0.1, 0)  # explode the 1st slice
+            with col2:
+                st.markdown(
+                    create_metric_card(
+                        f"{(match_won_after_toss_win/toss_won*100):.1f}%",
+                        "Win % After Toss Win",
+                    ),
+                    unsafe_allow_html=True,
+                )
 
-    ax2.pie(
-        outcome_sizes,
-        explode=explode,
-        labels=outcome_labels,
-        autopct="%1.1f%%",
-        shadow=True,
-        startangle=90,
-        colors=["#3776ab", "#e63946"],
-    )
-    ax2.set_title(
-        f"Match Outcome After Winning Toss ({response['toss_analysis']['toss_won'].shape[0]} toss wins)"
-    )
+            with col3:
+                st.markdown(
+                    create_metric_card(
+                        f"{(match_won_after_toss_loss/toss_lost*100):.1f}%",
+                        "Win % After Toss Loss",
+                    ),
+                    unsafe_allow_html=True,
+                )
 
-    # Display the second pie chart
-    st.pyplot(fig2)
+            st.markdown("---")
 
-    # Third pie chart: Match outcomes after losing toss
-    st.subheader("Match Outcome When Toss Was Lost")
-    fig3, ax3 = plt.subplots(figsize=(10, 6))
+            # Toss win/loss pie chart
+            st.markdown(
+                '<div class="subheader">Toss Win/Loss Distribution</div>',
+                unsafe_allow_html=True,
+            )
 
-    # Calculate toss losses
-    toss_losses = (
-        response["total_matches"].shape[0]
-        - response["toss_analysis"]["toss_won"].shape[0]
-    )
+            toss_data = {
+                "Result": ["Toss Won", "Toss Lost"],
+                "Count": [toss_won, toss_lost],
+                "Color": ["#4CAF50", "#ff6347"],
+            }
 
-    loss_outcome_labels = [
-        "Match Won after Losing Toss",
-        "Match Lost after Losing Toss",
-    ]
-    loss_outcome_sizes = [
-        response["toss_analysis"]["toss_loss_match_won"].shape[0],
-        toss_losses - response["toss_analysis"]["toss_loss_match_won"].shape[0],
-    ]
-    explode = (0.1, 0)  # explode the 1st slice
+            fig = px.pie(
+                toss_data,
+                values="Count",
+                names="Result",
+                color="Result",
+                color_discrete_map={"Toss Won": "#4CAF50", "Toss Lost": "#ff6347"},
+                title=f"Toss Outcomes ({total_matches} matches)",
+                hole=0.4,
+                height=400,
+            )
+            st.plotly_chart(fig, use_container_width=True)
 
-    ax3.pie(
-        loss_outcome_sizes,
-        explode=explode,
-        labels=loss_outcome_labels,
-        autopct="%1.1f%%",
-        shadow=True,
-        startangle=90,
-        colors=["#2ca02c", "#d62728"],
-    )
-    ax3.set_title(f"Match Outcome After Losing Toss ({toss_losses} toss losses)")
+        with tab2:
+            # Detailed analysis
+            col1, col2 = st.columns(2)
 
-    # Display the third pie chart
-    st.pyplot(fig3)
+            with col1:
+                # Match outcome after winning toss
+                st.markdown(
+                    '<div class="subheader">After Winning Toss</div>',
+                    unsafe_allow_html=True,
+                )
+
+                win_data = {
+                    "Result": ["Match Won", "Match Lost"],
+                    "Count": [match_won_after_toss_win, match_lost_after_toss_win],
+                    "Color": ["#3776ab", "#e63946"],
+                }
+
+                fig = px.pie(
+                    win_data,
+                    values="Count",
+                    names="Result",
+                    color="Result",
+                    color_discrete_map={
+                        "Match Won": "#3776ab",
+                        "Match Lost": "#e63946",
+                    },
+                    title=f"Match Outcomes After Toss Win ({toss_won} matches)",
+                    hole=0.4,
+                    height=400,
+                )
+                st.plotly_chart(fig, use_container_width=True)
+
+            with col2:
+                # Match outcome after losing toss
+                st.markdown(
+                    '<div class="subheader">After Losing Toss</div>',
+                    unsafe_allow_html=True,
+                )
+
+                loss_data = {
+                    "Result": ["Match Won", "Match Lost"],
+                    "Count": [match_won_after_toss_loss, match_lost_after_toss_loss],
+                    "Color": ["#2ca02c", "#d62728"],
+                }
+
+                fig = px.pie(
+                    loss_data,
+                    values="Count",
+                    names="Result",
+                    color="Result",
+                    color_discrete_map={
+                        "Match Won": "#2ca02c",
+                        "Match Lost": "#d62728",
+                    },
+                    title=f"Match Outcomes After Toss Loss ({toss_lost} matches)",
+                    hole=0.4,
+                    height=400,
+                )
+                st.plotly_chart(fig, use_container_width=True)
+
+            # Raw data table
+            st.markdown(
+                '<div class="subheader">Toss Statistics Data</div>',
+                unsafe_allow_html=True,
+            )
+
+            stats_data = {
+                "Metric": [
+                    "Total Matches",
+                    "Tosses Won",
+                    "Tosses Lost",
+                    "Matches Won After Toss Win",
+                    "Matches Lost After Toss Win",
+                    "Matches Won After Toss Loss",
+                    "Matches Lost After Toss Loss",
+                ],
+                "Count": [
+                    total_matches,
+                    toss_won,
+                    toss_lost,
+                    match_won_after_toss_win,
+                    match_lost_after_toss_win,
+                    match_won_after_toss_loss,
+                    match_lost_after_toss_loss,
+                ],
+                "Percentage": [
+                    100,
+                    (toss_won / total_matches) * 100,
+                    (toss_lost / total_matches) * 100,
+                    (match_won_after_toss_win / toss_won) * 100 if toss_won > 0 else 0,
+                    (match_lost_after_toss_win / toss_won) * 100 if toss_won > 0 else 0,
+                    (
+                        (match_won_after_toss_loss / toss_lost) * 100
+                        if toss_lost > 0
+                        else 0
+                    ),
+                    (
+                        (match_lost_after_toss_loss / toss_lost) * 100
+                        if toss_lost > 0
+                        else 0
+                    ),
+                ],
+            }
+
+            st.dataframe(pd.DataFrame(stats_data), use_container_width=True)
+
+    except Exception as e:
+        st.error(f"An error occurred: {str(e)}")
+        st.info("Please check your data format and try again.")
