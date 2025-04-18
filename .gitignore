@@ -1,0 +1,53 @@
+# Python-specific
+__pycache__/
+*.pyc
+*.pyo
+*.egg-info
+dist/
+build/
+sdist/
+venv/
+env/
+.venv/
+*.pth
+
+# Streamlit-specific (if you have cached data or sessions)
+.streamlit/cache/
+.streamlit/sessions.toml
+
+# Environment variables (important!)
+.env
+
+# Data files (if large or sensitive, consider other solutions)
+*.csv
+*.xlsx
+*.json
+*.parquet
+data/  # Or whatever directory you store data in
+
+# Logs and temporary files
+*.log
+tmp/
+temp/
+__MACOSX/  # macOS specific
+.DS_Store    # macOS specific
+
+# IDE specific files
+.idea/       # IntelliJ IDEA
+.vscode/     # VS Code
+*.swp       # Vim swap files
+*.swo       # Vim swap files
+.ropeproject/ # Rope project files
+.sourcetreecache/ # SourceTree cache files
+
+# Packages/installations
+node_modules/
+package-lock.json
+yarn.lock
+
+# Optional: If you have compiled extensions
+*.so
+*.pyd
+
+# Optional: Jupyter Notebook checkpoints
+.ipynb_checkpoints/

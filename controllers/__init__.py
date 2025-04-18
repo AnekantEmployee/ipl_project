@@ -1,0 +1,1 @@
+from .redirect_controller import redirect_controller
