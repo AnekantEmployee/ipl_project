@@ -3,7 +3,7 @@ import matplotlib.pyplot as plt
 
 
 def super_over_analysis(response, team):
-    if "total_super_over" in response:
+    if "total_super_over" in response and response["total_super_over"].shape[0] != 0:
         st.write(
             f"Insights of {response['total_super_over'].shape[0]} super over played by {team}"
         )
@@ -44,3 +44,5 @@ def super_over_analysis(response, team):
                 ["season", "city", "venue", "team1", "team2", "winner"]
             ].sort_values(by="winner")
         )
+    else:
+        st.error("No Data to Display")

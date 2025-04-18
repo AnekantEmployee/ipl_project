@@ -1,5 +1,6 @@
 import pandas as pd
 
+import traceback
 from constants import MATCHES_COL, PLAYERS_COL
 from utils import (
     get_team_data,
@@ -28,73 +29,73 @@ def get_actual_score(x):
 
 
 def get_players_analysis(df, team):
-    most_player_of_match = df["player_of_match"].value_counts()[:5]
+    try:
+        batter_df = df[
+            (
+                (df["toss_winner"] != team)
+                & (df["toss_decision"] == "bat")
+                & (df["inning"] == 2)
+            )
+            | (
+                (df["toss_winner"] != team)
+                & (df["toss_decision"] == "field")
+                & (df["inning"] == 1)
+            )
+            | (
+                (df["toss_winner"] == team)
+                & (df["toss_decision"] == "field")
+                & (df["inning"] == 2)
+            )
+            | (
+                (df["toss_winner"] == team)
+                & (df["toss_decision"] == "bat")
+                & (df["inning"] == 1)
+            )
+        ]
+        bowler_df = df[
+            (
+                (df["toss_winner"] != team)
+                & (df["toss_decision"] == "bat")
+                & (df["inning"] == 1)
+            )
+            | (
+                (df["toss_winner"] != team)
+                & (df["toss_decision"] == "field")
+                & (df["inning"] == 2)
+            )
+            | (
+                (df["toss_winner"] == team)
+                & (df["toss_decision"] == "field")
+                & (df["inning"] == 1)
+            )
+            | (
+                (df["toss_winner"] == team)
+                & (df["toss_decision"] == "bat")
+                & (df["inning"] == 2)
+            )
+        ]
 
-    batter_df = df[
-        (
-            (df["toss_winner"] != team)
-            & (df["toss_decision"] == "bat")
-            & (df["inning"] == 2)
-        )
-        | (
-            (df["toss_winner"] != team)
-            & (df["toss_decision"] == "field")
-            & (df["inning"] == 1)
-        )
-        | (
-            (df["toss_winner"] == team)
-            & (df["toss_decision"] == "field")
-            & (df["inning"] == 2)
-        )
-        | (
-            (df["toss_winner"] == team)
-            & (df["toss_decision"] == "bat")
-            & (df["inning"] == 1)
-        )
-    ]
-    bowler_df = df[
-        (
-            (df["toss_winner"] != team)
-            & (df["toss_decision"] == "bat")
-            & (df["inning"] == 1)
-        )
-        | (
-            (df["toss_winner"] != team)
-            & (df["toss_decision"] == "field")
-            & (df["inning"] == 2)
-        )
-        | (
-            (df["toss_winner"] == team)
-            & (df["toss_decision"] == "field")
-            & (df["inning"] == 1)
-        )
-        | (
-            (df["toss_winner"] == team)
-            & (df["toss_decision"] == "bat")
-            & (df["inning"] == 2)
-        )
-    ]
+        batter_analysis = {
+            "total_fours": get_fours_total(batter_df),
+            "fours_inning": get_four_inning(batter_df),
+            "total_sixes": get_total_sixes(batter_df),
+            "sixes_inning": get_sixes_inning(batter_df),
+            "highest_score_inning": get_highest_score_inning(batter_df),
+            "total_runs": get_total_runs(batter_df),
+            "fifties": get_fifties(batter_df),
+            "centuries": get_centuries(batter_df),
+        }
+        bowler_analysis = {
+            "wickets_total": get_bowler_wickets(bowler_df),
+            "wickets_inning": get_wicket_inning(bowler_df),
+        }
 
-    batter_analysis = {
-        "total_fours": get_fours_total(batter_df),
-        "fours_inning": get_four_inning(batter_df),
-        "total_sixes": get_total_sixes(batter_df),
-        "sixes_inning": get_sixes_inning(batter_df),
-        "highest_score_inning": get_highest_score_inning(batter_df),
-        "total_runs": get_total_runs(batter_df),
-        "fifties": get_fifties(batter_df),
-        "centuries": get_centuries(batter_df),
-    }
-    bowler_analysis = {
-        "wickets_total": get_bowler_wickets(bowler_df),
-        "wickets_inning": get_wicket_inning(bowler_df),
-    }
-
-    return {
-        "most_player_of_match": most_player_of_match,
-        "batter_analysis": batter_analysis,
-        "bowler_analysis": bowler_analysis,
-    }
+        return {
+            "batter_analysis": batter_analysis,
+            "bowler_analysis": bowler_analysis,
+        }
+    except Exception as e:
+        print(traceback.print_exception(e))
 
 
 def get_highest_score(df, team):
@@ -227,7 +228,10 @@ def get_team_analysis(cnx, team, season):
         (df["match_type"] != "League") & (df["match_type"] != "Final")
     ]
 
+    most_player_of_match = df["player_of_match"].value_counts()[:5]
+
     team_response = {
+        "most_player_of_match": most_player_of_match,
         "total_matches": df,
         "matches_won": matches_won,
         "matches_lost": matches_lost,

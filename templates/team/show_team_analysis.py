@@ -21,7 +21,7 @@ def show_team_analysis(response, team):
     with tab1:
         st.metric(
             "Most player of the matches won by " + team,
-            value=response["players_analysis"]["most_player_of_match"].index[0],
+            value=f"{response['most_player_of_match'].index[0]} ({response['most_player_of_match'].values[0]})",
         )
         overall_performance_team(response, team)
     with tab2:
