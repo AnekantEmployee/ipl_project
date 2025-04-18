@@ -1,3 +1,6 @@
+import pandas as pd
+
+
 def get_fours_total(batter_df):
     fours_total = (
         batter_df[batter_df["batsman_runs"] == 4]

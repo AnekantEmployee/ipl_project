@@ -1,3 +1,6 @@
+import pandas as pd
+
+
 def get_bowler_wickets(bowler_df):
     wickets_total = (
         bowler_df[

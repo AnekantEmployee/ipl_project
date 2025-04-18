@@ -239,6 +239,6 @@ def get_team_analysis(cnx, team, season):
         "final_matches_won": final_matches_won,
         "final_matches": final_matches,
         "non_final_matches": non_final_matches,
-        "players_analysis": get_players_analysis(df, team),
+        "players_analysis": get_players_analysis(batter_df, team),
     }
     return team_response
