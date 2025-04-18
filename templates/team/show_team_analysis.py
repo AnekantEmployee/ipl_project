@@ -4,12 +4,14 @@ from .tabs.tab3 import score_analysis
 from .tabs.tab5 import non_league_matches
 from .tabs.tab4 import super_over_analysis
 from .tabs.tab1 import overall_performance_team
+from .tabs.player_analysis import show_player_analysis
 
 
 def show_team_analysis(response, team):
-    tab1, tab2, tab3, tab4, tab5 = st.tabs(
+    tab1, player_tab, tab2, tab3, tab4, tab5 = st.tabs(
         [
             "Overall Performance",
+            "Player Performance",
             "Toss Analysis",
             "Score Analysis",
             "Super Over Analysis",
@@ -17,6 +19,10 @@ def show_team_analysis(response, team):
         ]
     )
     with tab1:
+        st.metric(
+            "Most player of the matches won by " + team,
+            value=response["players_analysis"]["most_player_of_match"].index[0],
+        )
         overall_performance_team(response, team)
     with tab2:
         toss_analysis(response, team)
@@ -26,3 +32,6 @@ def show_team_analysis(response, team):
         super_over_analysis(response["super_over_analysis"], team)
     with tab5:
         non_league_matches(response, team)
+    with player_tab:
+        st.subheader(f"Batting & Bowling Figures of {team}")
+        show_player_analysis(response["players_analysis"], team)
