@@ -1,7 +1,9 @@
 import pandas as pd
+import streamlit as st
 
-from constants import MATCHES_COL
 from utils import get_head_to_head_data
+from constants import MATCHES_COL, PLAYERS_COL
+from utils import get_team_players_data
 
 
 def get_home(team_name):
@@ -25,12 +27,18 @@ def get_home(team_name):
     return franchise_home_cities[team_name]
 
 
-def get_head_to_head_analysis(data, team1, team2, season):
+def get_head_to_head_analysis(data, player_response, team1, team2, season):
     df = pd.DataFrame(data, columns=MATCHES_COL)
+    player_df = pd.DataFrame(
+        player_response["data"], columns=PLAYERS_COL + ["match_id"] + MATCHES_COL
+    )
+
     if season != "All Seasons":
         df = df[df["season"] >= season]
+        player_df = player_df[player_df["season"] >= season]
 
     df.to_csv("views/matches/head_to_head.csv")
+    player_df.to_csv("views/matches/players.csv")
 
     # Overall analysis
     overall_analysis = {
@@ -134,13 +142,16 @@ def head_to_head_insights(cnx, team1, team2, season):
         return {"status": False, "message": "Teams are the same", "data": []}
 
     response = get_head_to_head_data(cnx, team1, team2)
+    player_response = get_team_players_data(cnx, team1, team2)
 
     try:
 
         if response["status"] == False:
             return response
         else:
-            insights = get_head_to_head_analysis(response["data"], team1, team2, season)
+            insights = get_head_to_head_analysis(
+                response["data"], player_response, team1, team2, season
+            )
             return {
                 "status": True,
                 "message": "Insights fetched successfully",

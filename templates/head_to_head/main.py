@@ -2,7 +2,7 @@ import streamlit as st
 
 from views import head_to_head_insights
 from utils import get_teams, get_seasons
-from .tabs.tabs import overall_performance, home_away_analysis, matches_statistics
+from .tabs.tabs import overall_performance, home_away_analysis
 
 
 def head_to_head_screen(cnx):
@@ -10,10 +10,11 @@ def head_to_head_screen(cnx):
 
     # Fetching all the teams data
     teams_data = get_teams(cnx)
-
     seasons_data = get_seasons(cnx)
+
     if not seasons_data["status"]:
         st.error(seasons_data["message"])
+
     seasons_data = seasons_data["data"]
     seasons_data.reverse()
     seasons_data.insert(0, "All Seasons")
@@ -39,7 +40,7 @@ def head_to_head_screen(cnx):
             st.markdown(" ")
             st.header(f"Head-to-Head: {team1} vs. {team2}")
             tab1, tab2, tab3 = st.tabs(
-                ["Overall Performance", "Home & Away Analysis", "Match Statistics"]
+                ["Overall Performance", "Home & Away Analysis", "Player Statistics"]
             )
 
             with tab1:
@@ -49,7 +50,7 @@ def head_to_head_screen(cnx):
             with tab2:
                 home_away_analysis(response["data"]["home_away_data"], team1, team2)
             with tab3:
-                matches_statistics(response["data"]["match_statistics"], team1, team2)
+                pass
 
             if len(response["data"]["overall_analysis"]["won_dataframe_team1"]) > 0:
                 st.write(" ")
