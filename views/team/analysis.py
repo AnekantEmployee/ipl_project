@@ -173,7 +173,7 @@ def get_team_analysis(cnx, team, season):
     df = pd.DataFrame(data["data"], columns=MATCHES_COL)
     df.rename(columns={"id": "match_id"}, inplace=True)
 
-    batter_df = pd.DataFrame(st.session_state["player_data"], columns=PLAYERS_COL)
+    batter_df = pd.DataFrame(get_team_players_data(), columns=PLAYERS_COL)
     batter_df = pd.merge(df, batter_df, on="match_id")
     batter_df = batter_df[(batter_df["team1"] == team) | (batter_df["team2"] == team)]
 
